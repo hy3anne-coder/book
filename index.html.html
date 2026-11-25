@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6차시 독서 기록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* VOICE: 차분하고 단정한 교실 도구, 학생이 혼자 써도 헷갈리지 않게
+   IDEA: 책갈피와 형광펜 — 차시마다 한 장씩 꽂히는 책갈피 여섯 장
+   PICTURE: 1~6차시 책갈피 띠 + 입력 폼 + 실시간으로 완성되는 책갈피 카드
+   COLOUR and TYPE: 흰 바탕, 코발트 책 표지색, 형광펜 노랑 / 구절은 Gowun Batang, 나머지는 IBM Plex Sans KR
+   LAYOUT: 상단 학생 정보 띠, 차시 띠, 폼 | 미리보기, 아래로 차시별 돌아보기 */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0f1424);--ink:light-dark(#141a2e,#eef1fb);--mute:light-dark(#5b6378,#a4acc4);
+--line:light-dark(#d9deea,#2a3350);--field:light-dark(#f5f7fc,#161d33);
+--cloth:light-dark(#2445a8,#3a5cd0);--soft:light-dark(#e6ebfa,#1d2747);--hl:light-dark(#ffe94d,#e9d23a);--warn:light-dark(#c2272d,#ff7b7b)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "IBM Plex Sans KR",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+header.band{background:var(--cloth);color:#fff;padding-bottom:28px}
+h1{font:700 clamp(32px,5vw,46px)/1.05 "Gowun Batang",serif;margin:0 0 6px;text-wrap:balance}
+header p{margin:0 0 20px;opacity:.88}
+.who{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2fr);gap:12px;max-width:620px}
+.who label{color:#fff}
+label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
+.req{color:var(--warn)}header .req{color:var(--hl)}
+input,textarea,select{width:100%;font:16px/1.5 inherit;font-family:inherit;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px}
+header input,header select{background:#fff;color:#141a2e;border-color:transparent}
+select{cursor:pointer}
+textarea{resize:vertical;min-height:110px}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--hl);outline-offset:2px;border-color:var(--cloth)}
+.notice{margin:14px 0 0;font-size:14px;color:var(--hl);min-height:22px}
+/* 차시 띠 */
+.sessions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:28px}
+.ses{position:relative;text-align:left;min-height:88px;padding:12px 10px 18px;border-radius:6px 6px 0 0;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 10px),0 100%);display:flex;flex-direction:column;gap:2px;font:inherit;cursor:pointer}
+.ses b{font-size:17px}
+.ses small{font-size:13px;color:var(--mute);line-height:1.35}
+.ses.done{background:var(--soft);border-color:var(--soft)}
+.ses.done small{color:var(--ink)}
+.ses.on{background:var(--cloth);border-color:var(--cloth);color:#fff}
+.ses.on small{color:#fff;opacity:.9}
+.ses.done::after{content:"";position:absolute;right:9px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--hl)}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.f{margin-bottom:16px}
+.fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.fh h2{font:700 26px/1.2 "Gowun Batang",serif;margin:0}
+.fh span{font-size:14px;color:var(--mute)}
+.pages{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center}
+.pages span{color:var(--mute);font-size:14px;white-space:nowrap}
+.hint{font-size:13px;color:var(--mute);margin-top:4px;display:flex;justify-content:space-between;gap:8px}
+.err{color:var(--warn);font-size:14px;min-height:22px;margin:0 0 8px}
+button{font:500 16px/1 inherit;font-family:inherit;min-height:46px;padding:0 18px;border-radius:10px;border:1.5px solid var(--cloth);background:transparent;color:var(--cloth);cursor:pointer}
+:root[data-theme=dark] button:not(.main):not(.ses){color:#c9d4ff}
+button.main{background:var(--cloth);color:#fff}
+button.small{min-height:44px;padding:0 12px;font-size:14px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+/* 책갈피 미리보기 */
+.mark{position:sticky;top:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:4px 4px 0 0;padding:28px 24px 48px;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 26px),0 100%)}
+.mark::before{content:"";position:absolute;inset:0 0 auto 0;height:10px;background:var(--cloth)}
+.meta{font-size:14px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 14px}
+.mark h3{font:700 26px/1.2 "Gowun Batang",serif;margin:10px 0 18px;text-wrap:balance}
+.quote{font:400 20px/1.85 "Gowun Batang",serif;margin:0 0 18px;overflow-wrap:anywhere}
+mark{background:linear-gradient(transparent 38%,var(--hl) 38%,var(--hl) 92%,transparent 92%) no-repeat;color:inherit;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.quote mark{animation:pen .7s ease-out}
+:root[data-theme=dark] mark{background-image:linear-gradient(transparent 38%,rgba(233,210,58,.45) 38%,rgba(233,210,58,.45) 92%,transparent 92%)}
+@keyframes pen{from{background-size:0 100%}to{background-size:100% 100%}}
+@media(prefers-reduced-motion:reduce){.quote mark{animation:none}}
+.why{border-top:1px dashed var(--line);padding-top:14px;overflow-wrap:anywhere}
+.why b{display:block;font-size:13px;color:var(--mute);font-weight:500;margin-bottom:2px}
+.empty{color:var(--mute)}
+/* 돌아보기 */
+.log{background:var(--field);border-top:1px solid var(--line)}
+.log h2{font:700 30px/1.1 "Gowun Batang",serif;margin:0 0 6px}
+.log .sub{color:var(--mute);margin:0 0 18px}
+.stats{display:flex;flex-wrap:wrap;gap:12px 36px;margin-bottom:14px}
+.stats div{font-size:14px;color:var(--mute)}
+.stats strong{display:block;font-size:30px;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden;max-width:620px;margin-bottom:28px}
+.bar i{display:block;height:100%;background:var(--cloth);border-radius:6px;transition:width .4s}
+.tl{list-style:none;margin:0;padding:0;position:relative}
+.tl::before{content:"";position:absolute;left:21px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.tl li{position:relative;padding-left:62px;margin-bottom:16px}
+.dot{position:absolute;left:0;top:10px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;background:var(--bg);border:2px solid var(--line);color:var(--mute)}
+.tl li.done .dot{background:var(--cloth);border-color:var(--cloth);color:#fff}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.card .t{font:700 19px/1.3 "Gowun Batang",serif}
+.card .m{font-size:13px;color:var(--mute)}
+.card .q{font:16px/1.75 "Gowun Batang",serif;overflow-wrap:anywhere;margin:0}
+.card p{margin:0;font-size:15px;overflow-wrap:anywhere}
+.card.blank{background:transparent;border-style:dashed;color:var(--mute);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tools{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:10}
+.toast.on{opacity:1}
+.dlg{position:fixed;inset:0;background:rgba(10,14,30,.5);display:none;place-items:center;padding:16px;z-index:9}
+.dlg.on{display:grid}
+.dlg>div{background:var(--bg);border-radius:14px;padding:22px;max-width:380px;width:100%}
+.dlg p{margin:0 0 16px}
+@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}.mark{position:static}.sessions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.who{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.who .nm{grid-column:1/-1}.row{grid-template-columns:minmax(0,1fr)}.tl li{padding-left:52px}.dot{width:38px;height:38px}.tl::before{left:18px}}
+@media print{header.band,main,.tools,.card .btns,.card.blank button{display:none}.log{background:#fff}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <h1>6차시 독서 기록</h1>
+  <p>차시마다 읽은 만큼 적고, 마음에 남은 한 구절에 형광펜을 그어 보세요.</p>
+  <div class="who">
+    <div><label for="ban">반 <span class="req">*</span></label><select id="ban"></select></div>
+    <div><label for="num">번호 <span class="req">*</span></label><select id="num"></select></div>
+    <div class="nm"><label for="name">이름 <span class="req">*</span></label><input id="name" placeholder="내 이름을 써요" autocomplete="off"></div>
+  </div>
+  <p class="notice" id="notice"></p>
+</div></header>
+
+<main class="band"><div class="wrap">
+  <div class="sessions" id="sessions" role="tablist" aria-label="차시 선택"></div>
+  <div class="grid">
+    <form id="form" novalidate>
+      <div class="fh"><h2 id="fhTitle">1차시 기록</h2><span id="fhState">아직 쓰지 않았어요</span></div>
+      <div class="row">
+        <div class="f"><label for="title">책 제목 <span class="req">*</span></label><input id="title" placeholder="예: 아몬드"></div>
+        <div class="f"><label for="date">읽은 날짜 <span class="req">*</span></label><input id="date" type="date"></div>
+      </div>
+      <div class="f">
+        <label for="p1">오늘 읽은 분량 <span class="req">*</span></label>
+        <div class="pages">
+          <input id="p1" type="number" inputmode="numeric" min="1" placeholder="시작">
+          <span>쪽부터</span>
+          <input id="p2" type="number" inputmode="numeric" min="1" placeholder="끝" aria-label="끝 쪽">
+          <span>쪽까지</span>
+        </div>
+        <div class="hint"><span id="pcount">시작 쪽과 끝 쪽을 적으면 읽은 쪽수가 계산돼요.</span></div>
+      </div>
+      <div class="f">
+        <label for="quote">인상 깊은 구절 <span class="req">*</span></label>
+        <textarea id="quote" placeholder="책에 쓰인 그대로 옮겨 적어 보세요."></textarea>
+        <div class="row" style="margin-top:8px">
+          <div><label for="qp" style="font-weight:400;color:var(--mute)">구절이 있는 쪽 (선택)</label><input id="qp" type="number" inputmode="numeric" min="1" placeholder="예: 57"></div>
+        </div>
+      </div>
+      <div class="f">
+        <label for="why">인상 깊은 이유 <span class="req">*</span></label>
+        <textarea id="why" placeholder="이 구절이 왜 마음에 남았나요? 내 경험이나 생각과 연결해 써 보세요."></textarea>
+        <div class="hint"><span>두세 문장 이상 쓰면 좋아요.</span><span id="wcount">0자</span></div>
+      </div>
+      <p class="err" id="err" role="alert"></p>
+      <div class="btns">
+        <button class="main" type="submit" id="save">1차시 기록 저장</button>
+        <button type="button" id="del" hidden>이 차시 기록 지우기</button>
+      </div>
+    </form>
+    <aside class="mark" aria-live="polite" id="preview"></aside>
+  </div>
+</div></main>
+
+<section class="band log"><div class="wrap">
+  <h2>지난 차시 돌아보기</h2>
+  <p class="sub" id="logSub">1차시부터 6차시까지 내가 읽은 길을 한눈에 볼 수 있어요.</p>
+  <div class="stats" id="stats"></div>
+  <div class="bar" aria-hidden="true"><i id="barFill" style="width:0"></i></div>
+  <ol class="tl" id="tl"></ol>
+  <div class="tools">
+    <button type="button" id="copy">전체 기록 복사</button>
+    <button type="button" id="csv">엑셀용 파일(CSV) 저장</button>
+    <button type="button" id="print">인쇄</button>
+  </div>
+</div></section>
+
+<div class="dlg" id="dlg" role="dialog" aria-modal="true"><div><p id="dlgMsg"></p><div class="btns"><button class="main" id="dlgOk" type="button">확인</button><button id="dlgNo" type="button">취소</button></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+const N=6,BANS=8,NUMS=27;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const F=['title','date','p1','p2','quote','qp','why'];
+const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fmtDate=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${y}. ${+m}. ${+d}.`};
+const pages=(a,b)=>{a=+a;b=+b;return a>0&&b>=a?b-a+1:0};
+
+$('ban').innerHTML='<option value="">선택</option>'+Array.from({length:BANS},(_,i)=>`<option value="${i+1}">${i+1}반</option>`).join('');
+$('num').innerHTML='<option value="">선택</option>'+Array.from({length:NUMS},(_,i)=>`<option value="${i+1}">${i+1}번</option>`).join('');
+
+let cur=1,data={name:'',s:{}};
+const key=()=>$('ban').value&&$('num').value?`reading6-${$('ban').value}-${$('num').value}`:null;
+const v=k=>$(k).value.trim();
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2400)}
+function ask(m){return new Promise(r=>{$('dlgMsg').textContent=m;$('dlg').classList.add('on');$('dlgOk').focus();const done=x=>{$('dlg').classList.remove('on');$('dlgOk').onclick=$('dlgNo').onclick=null;r(x)};$('dlgOk').onclick=()=>done(true);$('dlgNo').onclick=()=>done(false)})}
+
+function openStudent(){
+  const k=key();
+  data=k?load(k,{name:'',s:{}}):{name:'',s:{}};
+  if(k){store('reading6-last',{ban:$('ban').value,num:$('num').value});if(data.name)$('name').value=data.name}
+  const n=Object.keys(data.s).length;
+  $('notice').textContent=!k?'반과 번호를 먼저 골라 주세요.':n?`${$('ban').value}반 ${$('num').value}번의 기록 ${n}개를 불러왔어요.`:'';
+  const next=[...Array(N)].map((_,i)=>i+1).find(i=>!data.s[i])||N;
+  pick(next);
+}
+function saveStudent(){const k=key();if(k){data.name=v('name');store(k,data)}}
+
+function pick(i){
+  cur=i;const r=data.s[i];
+  if(r){F.forEach(k=>$(k).value=r[k]||'')}
+  else{
+    F.forEach(k=>$(k).value='');$('date').value=today();
+    const prev=[...Array(i-1)].map((_,j)=>data.s[i-1-j]).find(Boolean);
+    if(prev){$('title').value=prev.title;if(+prev.p2)$('p1').value=+prev.p2+1}
+  }
+  $('fhTitle').textContent=`${i}차시 기록`;
+  $('fhState').textContent=r?'저장된 기록이에요 · 고쳐서 다시 저장할 수 있어요':'아직 쓰지 않았어요';
+  $('save').textContent=r?`${i}차시 고친 내용 저장`:`${i}차시 기록 저장`;
+  $('del').hidden=!r;$('err').textContent='';
+  renderSessions();preview();
+}
+
+function renderSessions(){
+  $('sessions').innerHTML=[...Array(N)].map((_,j)=>{const i=j+1,r=data.s[i];
+    return `<button type="button" role="tab" aria-selected="${i===cur}" class="ses${r?' done':''}${i===cur?' on':''}" data-i="${i}"><b>${i}차시</b><small>${r?`${esc(r.p1)}~${esc(r.p2)}쪽`:'미작성'}</small><small>${r?esc(fmtDate(r.date)):''}</small></button>`}).join('');
+}
+
+function preview(){
+  const n=pages(v('p1'),v('p2')),p1=v('p1'),p2=v('p2');
+  $('pcount').textContent=p1&&p2?(n?`이번 차시에 ${n}쪽을 읽었어요.`:'끝 쪽이 시작 쪽보다 크거나 같아야 해요.'):'시작 쪽과 끝 쪽을 적으면 읽은 쪽수가 계산돼요.';
+  $('wcount').textContent=v('why').length+'자';
+  const who=[$('ban').value&&$('ban').value+'반',$('num').value&&$('num').value+'번',v('name')].filter(Boolean).join(' ');
+  $('preview').innerHTML=`<div class="meta"><span>${cur}차시</span><span>${esc(who||'반 · 번호 · 이름')}</span><span>${esc(fmtDate(v('date')))}</span>${n?`<span>${esc(p1)}~${esc(p2)}쪽 (${n}쪽)</span>`:''}</div>
+  <h3>${v('title')?esc(v('title')):'<span class="empty">책 제목</span>'}</h3>
+  <p class="quote">${v('quote')?`<mark>${esc(v('quote'))}</mark>${v('qp')?` <span style="font-size:14px;color:var(--mute)">(${esc(v('qp'))}쪽)</span>`:''}`:'<span class="empty">인상 깊은 구절을 적으면 여기에 형광펜이 그어져요.</span>'}</p>
+  <div class="why"><b>인상 깊은 이유</b>${v('why')?esc(v('why')).replace(/\n/g,'<br>'):'<span class="empty">아직 쓰지 않았어요.</span>'}</div>`;
+}
+
+function renderLog(){
+  const rs=Object.values(data.s),done=rs.length,total=rs.reduce((s,r)=>s+pages(r.p1,r.p2),0),books=new Set(rs.map(r=>r.title)).size;
+  $('stats').innerHTML=`<div><strong>${done} / ${N}</strong>완료한 차시</div><div><strong>${total}</strong>누적 쪽수</div><div><strong>${books}</strong>읽은 책</div>`;
+  $('barFill').style.width=(done/N*100)+'%';
+  $('logSub').textContent=done===N?'6차시를 모두 마쳤어요. 처음 고른 구절과 마지막 구절을 비교해 보세요.':'1차시부터 6차시까지 내가 읽은 길을 한눈에 볼 수 있어요.';
+  let acc=0;
+  $('tl').innerHTML=[...Array(N)].map((_,j)=>{const i=j+1,r=data.s[i];
+    if(!r)return `<li><span class="dot">${i}</span><div class="card blank"><span>${i}차시 · 아직 쓰지 않았어요</span><button class="small" type="button" data-go="${i}">쓰러 가기</button></div></li>`;
+    acc+=pages(r.p1,r.p2);
+    return `<li class="done"><span class="dot">${i}</span><article class="card">
+      <div class="m">${i}차시 · ${esc(fmtDate(r.date))} · ${esc(r.p1)}~${esc(r.p2)}쪽 (${pages(r.p1,r.p2)}쪽, 누적 ${acc}쪽)</div>
+      <div class="t">${esc(r.title)}</div>
+      <p class="q"><mark>${esc(r.quote)}</mark>${r.qp?` <span class="m">(${esc(r.qp)}쪽)</span>`:''}</p>
+      <p>${esc(r.why).replace(/\n/g,'<br>')}</p>
+      <div class="btns"><button class="small" type="button" data-go="${i}">이 차시 고치기</button></div>
+    </article></li>`}).join('');
+}
+const refresh=()=>{renderSessions();renderLog();preview()};
+
+$('sessions').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)pick(+b.dataset.i)});
+$('tl').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;pick(+b.dataset.go);$('sessions').scrollIntoView({behavior:'smooth'});$('title').focus({preventScroll:true})});
+F.forEach(k=>$(k).addEventListener('input',preview));
+$('ban').addEventListener('change',()=>{$('name').value='';openStudent();renderLog()});
+$('num').addEventListener('change',()=>{$('name').value='';openStudent();renderLog()});
+$('name').addEventListener('input',()=>{saveStudent();preview()});
+
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const miss=[];
+  if(!$('ban').value)miss.push('반');if(!$('num').value)miss.push('번호');if(!v('name'))miss.push('이름');
+  if(!v('title'))miss.push('책 제목');if(!v('date'))miss.push('읽은 날짜');
+  if(!v('p1')||!v('p2'))miss.push('읽은 분량');if(!v('quote'))miss.push('인상 깊은 구절');if(!v('why'))miss.push('인상 깊은 이유');
+  if(miss.length){$('err').textContent=miss.join(', ')+'을(를) 채워 주세요.';return}
+  if(!pages(v('p1'),v('p2'))){$('err').textContent='끝 쪽이 시작 쪽보다 크거나 같아야 해요.';$('p2').focus();return}
+  const was=!!data.s[cur];
+  data.s[cur]=Object.fromEntries(F.map(k=>[k,v(k)]));saveStudent();
+  toast(was?`${cur}차시 기록을 고쳤어요.`:`${cur}차시 기록을 저장했어요.`);
+  pick(cur);renderLog();
+});
+$('del').onclick=async()=>{if(data.s[cur]&&await ask(`${cur}차시 기록을 지울까요? 지우면 되돌릴 수 없어요.`)){delete data.s[cur];saveStudent();pick(cur);renderLog();toast(`${cur}차시 기록을 지웠어요.`)}};
+
+const whoLine=()=>`${$('ban').value}반 ${$('num').value}번 ${v('name')}`;
+const sorted=()=>[...Array(N)].map((_,j)=>[j+1,data.s[j+1]]).filter(x=>x[1]);
+$('copy').onclick=async()=>{
+  if(!sorted().length)return toast('복사할 기록이 없어요.');
+  const txt=`[6차시 독서 기록] ${whoLine()}\n\n`+sorted().map(([i,r])=>`${i}차시 | ${r.title} | ${fmtDate(r.date)} | ${r.p1}~${r.p2}쪽(${pages(r.p1,r.p2)}쪽)\n- 인상 깊은 구절: "${r.quote}"${r.qp?` (${r.qp}쪽)`:''}\n- 인상 깊은 이유: ${r.why}`).join('\n\n');
+  try{await navigator.clipboard.writeText(txt);toast('전체 기록을 복사했어요. 제출할 곳에 붙여 넣으세요.')}catch(e){toast('복사가 막혀 있어요. 기록을 직접 선택해 복사해 주세요.')}
+};
+$('csv').onclick=()=>{
+  if(!sorted().length)return toast('저장할 기록이 없어요.');
+  const q=s=>`"${String(s??'').replace(/"/g,'""')}"`;
+  const rows=[['반','번호','이름','차시','책 제목','읽은 날짜','시작 쪽','끝 쪽','읽은 쪽수','인상 깊은 구절','구절 쪽','인상 깊은 이유']].concat(sorted().map(([i,r])=>[$('ban').value,$('num').value,v('name'),i,r.title,r.date,r.p1,r.p2,pages(r.p1,r.p2),r.quote,r.qp,r.why]));
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv'}));a.download=`독서기록_${$('ban').value}반${$('num').value}번_${v('name')}.csv`;document.body.appendChild(a);a.click();a.remove();toast('파일 저장을 시작했어요. 저장이 안 되면 "전체 기록 복사"를 써 주세요.')}catch(e){toast('여기서는 파일 저장이 막혀 있어요. "전체 기록 복사"를 써 주세요.')}
+};
+$('print').onclick=()=>{try{window.print()}catch(e){}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('dlg').classList.contains('on'))$('dlgNo').click()});
+
+const last=load('reading6-last',null);
+if(last){$('ban').value=last.ban;$('num').value=last.num}
+openStudent();renderLog();
+}
+</script>
+</body>
+</html>
